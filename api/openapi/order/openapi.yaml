@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Order service
+  description: Order service
+  version: 1.0.0
+servers:
+  - url: "https://{hostname}/api"
+    variables:
+      hostname:
+        default: 127.0.0.1
+# 路径中的变量使用下划线命名
+paths:
+  /customer/{customer_id}/orders/{order_id}:
+    get:
+      description: "Get order"
+      parameters:
+        - name: customer_id
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: order_id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+        default:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /customer/{customer_id}/create:
+    post:
+      description: "Create order"
+      parameters:
+        - name: customer_id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+        default:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+# schema 使用大驼峰命名；schema 内的变量使用小驼峰命名
+components:
+  schemas:
+    Response:
+      type: object
+      required:
+        - errorCode
+        - message
+        - data
+      properties:
+        errorCode:
+          type: integer
+          format: int64
+        message:
+          type: string
+        data:
+          type: object
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - customerID
+        - items
+      properties:
+        customerID:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemWithQuantity"
+
+    ItemWithQuantity:
+      type: object
+      required:
+        - itemID
+        - quantity
+      properties:
+        itemID:
+          type: string
+        quantity:
+          type: integer
+          format: int64
