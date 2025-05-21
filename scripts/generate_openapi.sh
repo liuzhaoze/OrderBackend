@@ -22,6 +22,10 @@ function generate() {
   # code for server
   oapi-codegen -generate types -o "$output_dir/openapi_types.gen.go" -package "$package_name" "$OPENAPI_ROOT/$service_name/openapi.yaml"
   oapi-codegen -generate "$SERVER_TYPE" -o "$output_dir/openapi_server.gen.go" -package "$package_name" "$OPENAPI_ROOT/$service_name/openapi.yaml"
+
+  # code for client
+  oapi-codegen -generate types -o "common/client/$service_name/openapi_types.gen.go" -package "$service_name" "$OPENAPI_ROOT/$service_name/openapi.yaml"
+  oapi-codegen -generate client -o "common/client/$service_name/openapi_client.gen.go" -package "$service_name" "$OPENAPI_ROOT/$service_name/openapi.yaml"
 }
 
 generate order/ports ports order
