@@ -1,0 +1,35 @@
+syntax = "proto3";
+package stock;
+
+option go_package = "common/protobuf/stockpb";
+
+service StockService {
+  rpc CheckAndFetchItems(CheckAndFetchItemsRequest) returns (CheckAndFetchItemsResponse);
+}
+
+message CheckAndFetchItemsRequest {
+  repeated ItemWithQuantity Items = 1;
+}
+
+message CheckAndFetchItemsResponse {
+  StockStatus StatusCode = 1;
+  repeated Item Items = 2;
+}
+
+enum StockStatus {
+  Unknown = 0;
+  Sufficient = 1;
+  Insufficient = 2;
+}
+
+message ItemWithQuantity {
+  string ItemID = 1;
+  int64 Quantity = 2;
+}
+
+message Item {
+  string ItemID = 1;
+  string Name = 2;
+  int64 Quantity = 3;
+  string PriceID = 4;
+}
