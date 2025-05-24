@@ -8,7 +8,6 @@ import (
 	"order/application"
 	"order/application/command"
 	"order/application/query"
-	"order/domain"
 	"order/dto"
 	"order/ports"
 )
@@ -42,13 +41,9 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 		return
 	}
 
-	convertedItems := make([]*domain.ItemWithQuantity, len(requestBody.Items))
-	for i, item := range requestBody.Items {
-		convertedItems[i] = dto.NewItemWithQuantityConverter().FromHttp(item)
-	}
 	result, err := h.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrderCommand{
 		CustomerID: requestBody.CustomerID,
-		Items:      convertedItems,
+		Items:      dto.NewItemWithQuantityConverter().FromHttpBatch(requestBody.Items),
 	})
 	if err != nil {
 		resp := ports.Response{

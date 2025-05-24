@@ -30,12 +30,7 @@ type createOrder struct {
 
 func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (CreateOrderResult, error) {
 	packedItems := packItems(command.Items)
-
-	grpcBody := make([]*stockpb.ItemWithQuantity, len(packedItems))
-	for i, item := range packedItems {
-		grpcBody[i] = dto.NewItemWithQuantityConverter().ToStockGrpc(item)
-	}
-	grpcRequest := &stockpb.CheckAndFetchItemsRequest{Items: grpcBody}
+	grpcRequest := &stockpb.CheckAndFetchItemsRequest{Items: dto.NewItemWithQuantityConverter().ToStockGrpcBatch(packedItems)}
 	// 通过 stock gRPC 校验库存是否充足
 	// 库存充足：扣减订单对应的库存，并返回剩余库存
 	// 库存不足：直接返回订单对应的库存，不扣减库存
@@ -48,10 +43,7 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 	if convertErr != nil {
 		return CreateOrderResult{OrderID: ""}, convertErr
 	}
-	stockItems := make([]*domain.Item, len(grpcResponse.Items))
-	for i, item := range grpcResponse.Items {
-		stockItems[i] = dto.NewItemConverter().FromStockGrpc(item)
-	}
+	stockItems := dto.NewItemConverter().FromStockGrpcBatch(grpcResponse.Items)
 
 	switch stockStatus {
 	case consts.StockStatusInsufficient:
