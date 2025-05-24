@@ -1,18 +1,21 @@
 package stock
 
 import (
+	_ "common/config"
+	"common/discovery"
 	"common/protobuf/stockpb"
 	"context"
-	"fmt"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func NewStockGrpcClient(ctx context.Context) (client stockpb.StockServiceClient, close func() error, err error) {
-	host, port := viper.GetString("stock.grpc-host"), viper.GetString("stock.grpc-port")
-	address := fmt.Sprintf("%s:%s", host, port)
-	conn, err := grpc.NewClient(address, dialOptions()...)
+	stockGrpcServerAddress, err := discovery.GetServiceAddress(ctx, viper.GetString("stock.service-name"))
+	if err != nil {
+		return nil, nil, err
+	}
+	conn, err := grpc.NewClient(stockGrpcServerAddress, dialOptions()...)
 	if err != nil {
 		return nil, nil, err
 	}

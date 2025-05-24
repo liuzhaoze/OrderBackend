@@ -7,3 +7,7 @@ stock:
   service-name: stock
   grpc-host: 127.0.0.1
   grpc-port: 8202
+
+consul:
+  host: 127.0.0.1
+  port: 8400
