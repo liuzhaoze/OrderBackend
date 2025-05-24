@@ -11,6 +11,7 @@ import (
 )
 
 func NewApplication(ctx context.Context) (*application.Application, func()) {
+	logger := logrus.StandardLogger()
 	orderRepo := database.NewMemoryDatabase()
 	stockGrpcClient, closeStockGrpcClient, err := client.NewStockGrpcClient(ctx)
 	if err != nil {
@@ -18,11 +19,11 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 	}
 	return &application.Application{
 			Commands: application.Commands{
-				CreateOrder: command.NewCreateOrderHandler(orderRepo, stockGrpcClient),
-				UpdateOrder: command.NewUpdateOrderHandler(orderRepo),
+				CreateOrder: command.NewCreateOrderHandler(orderRepo, stockGrpcClient, logger),
+				UpdateOrder: command.NewUpdateOrderHandler(orderRepo, logger),
 			},
 			Queries: application.Queries{
-				GetOrder: query.NewGetOrderHandler(orderRepo),
+				GetOrder: query.NewGetOrderHandler(orderRepo, logger),
 			},
 		}, func() {
 			_ = closeStockGrpcClient()

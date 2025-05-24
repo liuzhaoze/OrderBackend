@@ -3,6 +3,7 @@ package command
 import (
 	"common/cqrs"
 	"context"
+	"github.com/sirupsen/logrus"
 	"stock/domain"
 )
 
@@ -44,8 +45,10 @@ func (f fetchItems) Handle(ctx context.Context, command FetchItemsCommand) (Fetc
 }
 
 func NewFetchItemsHandler(stockRepo domain.StockRepository,
+	logger *logrus.Logger,
 ) FetchItemsHandler {
 	return cqrs.ApplyCommandDecorator[FetchItemsCommand, FetchItemsResult](
 		fetchItems{stockRepo: stockRepo},
+		logger,
 	)
 }

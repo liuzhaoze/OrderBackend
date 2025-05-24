@@ -3,6 +3,7 @@ package command
 import (
 	"common/cqrs"
 	"context"
+	"github.com/sirupsen/logrus"
 	"order/domain"
 )
 
@@ -30,8 +31,10 @@ func (u updateOrder) Handle(ctx context.Context, command UpdateOrderCommand) (Up
 }
 
 func NewUpdateOrderHandler(orderRepo domain.OrderRepository,
+	logger *logrus.Logger,
 ) UpdateOrderHandler {
 	return cqrs.ApplyCommandDecorator[UpdateOrderCommand, UpdateOrderResult](
 		updateOrder{orderRepo: orderRepo},
+		logger,
 	)
 }

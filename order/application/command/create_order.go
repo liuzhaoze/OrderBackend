@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
 	"order/domain"
 	"order/dto"
@@ -82,9 +83,11 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 }
 
 func NewCreateOrderHandler(orderRepo domain.OrderRepository, stockGrpc stockpb.StockServiceClient,
+	logger *logrus.Logger,
 ) CreateOrderHandler {
 	return cqrs.ApplyCommandDecorator[CreateOrderCommand, CreateOrderResult](
 		createOrder{orderRepo: orderRepo, stockGrpc: stockGrpc},
+		logger,
 	)
 }
 

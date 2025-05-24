@@ -4,6 +4,7 @@ import (
 	"common/consts"
 	"common/cqrs"
 	"context"
+	"github.com/sirupsen/logrus"
 	"stock/domain"
 )
 
@@ -45,8 +46,10 @@ func (c checkItems) Handle(ctx context.Context, query CheckItemsQuery) (CheckIte
 }
 
 func NewCheckItemsHandler(stockRepo domain.StockRepository,
+	logger *logrus.Logger,
 ) CheckItemsHandler {
 	return cqrs.ApplyQueryDecorator[CheckItemsQuery, CheckItemsResult](
 		checkItems{stockRepo: stockRepo},
+		logger,
 	)
 }

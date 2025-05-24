@@ -3,6 +3,7 @@ package query
 import (
 	"common/cqrs"
 	"context"
+	"github.com/sirupsen/logrus"
 	"order/domain"
 )
 
@@ -30,8 +31,10 @@ func (g getOrder) Handle(ctx context.Context, query GetOrderQuery) (GetOrderResu
 }
 
 func NewGetOrderHandler(orderRepo domain.OrderRepository,
+	logger *logrus.Logger,
 ) GetOrderHandler {
 	return cqrs.ApplyQueryDecorator[GetOrderQuery, GetOrderResult](
 		getOrder{orderRepo: orderRepo},
+		logger,
 	)
 }
