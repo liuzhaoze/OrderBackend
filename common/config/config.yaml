@@ -11,3 +11,9 @@ stock:
 consul:
   host: 127.0.0.1
   port: 8400
+
+rabbitmq:
+  user: guest
+  password: guest
+  host: 127.0.0.1
+  port: 8500

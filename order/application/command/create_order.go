@@ -1,6 +1,7 @@
 package command
 
 import (
+	"common/broker"
 	"common/consts"
 	"common/cqrs"
 	"common/protobuf/stockpb"
@@ -25,8 +26,9 @@ type CreateOrderResult struct {
 type CreateOrderHandler cqrs.CommandHandler[CreateOrderCommand, CreateOrderResult]
 
 type createOrder struct {
-	orderRepo domain.OrderRepository
-	stockGrpc stockpb.StockServiceClient
+	orderRepo   domain.OrderRepository
+	stockGrpc   stockpb.StockServiceClient
+	eventSender domain.EventSender
 }
 
 func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (CreateOrderResult, error) {
@@ -75,6 +77,11 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 			return CreateOrderResult{OrderID: ""}, err
 		}
 
+		err = c.eventSender.Direct(ctx, domain.Event{Destination: broker.EventOrderCreated, Data: order})
+		if err != nil {
+			return CreateOrderResult{OrderID: ""}, err
+		}
+
 		return CreateOrderResult{OrderID: order.OrderID}, nil
 
 	default:
@@ -82,11 +89,11 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 	}
 }
 
-func NewCreateOrderHandler(orderRepo domain.OrderRepository, stockGrpc stockpb.StockServiceClient,
+func NewCreateOrderHandler(orderRepo domain.OrderRepository, stockGrpc stockpb.StockServiceClient, eventSender domain.EventSender,
 	logger *logrus.Logger,
 ) CreateOrderHandler {
 	return cqrs.ApplyCommandDecorator[CreateOrderCommand, CreateOrderResult](
-		createOrder{orderRepo: orderRepo, stockGrpc: stockGrpc},
+		createOrder{orderRepo: orderRepo, stockGrpc: stockGrpc, eventSender: eventSender},
 		logger,
 	)
 }
