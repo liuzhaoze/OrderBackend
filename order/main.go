@@ -2,10 +2,12 @@ package main
 
 import (
 	_ "common/config" // import for side effect to load configuration
+	"common/protobuf/orderpb"
 	"common/server"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"order/ports"
 )
 
@@ -17,6 +19,10 @@ func main() {
 
 	application, cleanup := NewApplication(ctx)
 	defer cleanup()
+
+	go server.RunGrpcServer(serviceName, func(s *grpc.Server) {
+		orderpb.RegisterOrderServiceServer(s, NewGrpcHandler())
+	})
 
 	server.RunHttpServer(serviceName, func(router *gin.Engine) {
 		ports.RegisterHandlersWithOptions(router, NewHttpHandler(application), ports.GinServerOptions{
