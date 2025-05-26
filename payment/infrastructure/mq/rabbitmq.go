@@ -2,17 +2,21 @@ package mq
 
 import (
 	"common/broker"
+	"context"
 	"encoding/json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"payment/application"
+	"payment/application/command"
 	"payment/domain"
 )
 
 type RabbitMQEventReceiver struct {
+	app *application.Application
 }
 
-func NewRabbitMQEventReceiver() *RabbitMQEventReceiver {
-	return &RabbitMQEventReceiver{}
+func NewRabbitMQEventReceiver(app *application.Application) *RabbitMQEventReceiver {
+	return &RabbitMQEventReceiver{app: app}
 }
 
 func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
@@ -45,7 +49,10 @@ func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(msg *amqp.Delivery) {
 		return
 	}
 
-	// TODO: implement real logic
+	if _, err := r.app.Commands.CreatePayment.Handle(context.TODO(), command.CreatePaymentCommand{Order: order}); err != nil {
+		logrus.Warnf("failed to create payment for order %s: %s", order.OrderID, err)
+		// TODO: retry
+	}
 
 	_ = msg.Ack(false)
 }
