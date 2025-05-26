@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common/broker"
 	_ "common/config" // import for side effect to load configuration
 	"common/discovery"
 	"common/protobuf/orderpb"
@@ -10,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"order/infrastructure/mq"
 	"order/ports"
 )
 
@@ -27,6 +29,21 @@ func main() {
 		logrus.Fatal(err)
 	}
 	defer deregisterConsul()
+
+	rmqConn, closeRmqConn := broker.RabbitMQConnect(
+		viper.GetString("rabbitmq.user"),
+		viper.GetString("rabbitmq.password"),
+		viper.GetString("rabbitmq.host"),
+		viper.GetString("rabbitmq.port"),
+	)
+	rmqChan := broker.RabbitMQChannel(rmqConn)
+	defer func() {
+		_ = rmqChan.Close()
+		_ = closeRmqConn()
+	}()
+
+	eventReceiver := mq.NewRabbitMQEventReceiver()
+	go eventReceiver.Listen(rmqChan)
 
 	go server.RunGrpcServer(serviceName, func(s *grpc.Server) {
 		orderpb.RegisterOrderServiceServer(s, NewGrpcHandler(application))
