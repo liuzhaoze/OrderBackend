@@ -3,6 +3,7 @@ package main
 import (
 	client "common/client/order"
 	_ "common/config"
+	"common/protobuf/orderpb"
 	"context"
 	"fmt"
 	"github.com/spf13/viper"
@@ -66,4 +67,41 @@ func post(t *testing.T, customerID string, body client.PostCustomerCustomerIdCre
 	}
 
 	return response, nil
+}
+
+var (
+	testOrder = &orderpb.Order{
+		OrderID:    "test_order_1",
+		CustomerID: "test_customer_1",
+		Items: []*orderpb.Item{
+			{ItemID: "test_item_1", Name: "item1", Quantity: 10, PriceID: "price_test_item_1"},
+			{ItemID: "test_item_2", Name: "item2", Quantity: 20, PriceID: "price_test_item_2"},
+		},
+		Status:      orderpb.OrderStatus_WaitingForPayment,
+		PaymentLink: "test_payment_link",
+	}
+)
+
+func TestUpdateOrder(t *testing.T) {
+	orderGrpcClient, closeOrderGrpcClient, err := client.NewOrderGrpcClient(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = closeOrderGrpcClient()
+	}()
+
+	request := &orderpb.UpdateOrderRequest{
+		UpdateOptions: orderpb.UpdateOption_PaymentLink,
+		Order:         testOrder,
+	}
+	response, err := orderGrpcClient.UpdateOrder(ctx, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.True(t, request.UpdateOptions&orderpb.UpdateOption_PaymentLink == orderpb.UpdateOption_PaymentLink)
+	assert.True(t, request.UpdateOptions&orderpb.UpdateOption_Status == orderpb.UpdateOption_Unspecified)
+	assert.Equal(t, orderpb.OrderStatus_WaitingForPayment, response.Order.Status)
+	assert.Equal(t, 2, len(response.Order.Items))
 }
