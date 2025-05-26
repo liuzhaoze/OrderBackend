@@ -2,10 +2,12 @@ package main
 
 import (
 	_ "common/config" // import for side effect to load configuration
+	"common/discovery"
 	"common/protobuf/orderpb"
 	"common/server"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"order/ports"
@@ -19,6 +21,12 @@ func main() {
 
 	application, cleanup := NewApplication(ctx)
 	defer cleanup()
+
+	deregisterConsul, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer deregisterConsul()
 
 	go server.RunGrpcServer(serviceName, func(s *grpc.Server) {
 		orderpb.RegisterOrderServiceServer(s, NewGrpcHandler())
