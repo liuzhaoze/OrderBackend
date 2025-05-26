@@ -3,11 +3,18 @@ package main
 import (
 	"common/broker"
 	_ "common/config"
+	"context"
 	"github.com/spf13/viper"
 	"process/infrastructure/mq"
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	application, cleanup := NewApplication(ctx)
+	defer cleanup()
+
 	rmqConn, closeRmqConn := broker.RabbitMQConnect(
 		viper.GetString("rabbitmq.user"),
 		viper.GetString("rabbitmq.password"),
@@ -20,7 +27,7 @@ func main() {
 		_ = closeRmqConn()
 	}()
 
-	eventReceiver := mq.NewRabbitMQEventReceiver()
+	eventReceiver := mq.NewRabbitMQEventReceiver(application)
 	go eventReceiver.Listen(rmqChan)
 
 	select {}

@@ -2,17 +2,21 @@ package mq
 
 import (
 	"common/broker"
+	"context"
 	"encoding/json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"process/application"
+	"process/application/command"
 	"process/domain"
 )
 
 type RabbitMQEventReceiver struct {
+	app *application.Application
 }
 
-func NewRabbitMQEventReceiver() *RabbitMQEventReceiver {
-	return &RabbitMQEventReceiver{}
+func NewRabbitMQEventReceiver(app *application.Application) *RabbitMQEventReceiver {
+	return &RabbitMQEventReceiver{app: app}
 }
 
 func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
@@ -50,7 +54,10 @@ func (r *RabbitMQEventReceiver) OrderPaidEventHandler(msg *amqp.Delivery) {
 		return
 	}
 
-	// TODO: implement real logic
+	if _, err := r.app.Commands.ProcessOrder.Handle(context.TODO(), command.ProcessOrderCommand{Order: order}); err != nil {
+		logrus.Warnf("failed to process order %s: %s", order.OrderID, err)
+		// TODO: retry
+	}
 
 	_ = msg.Ack(false)
 }
