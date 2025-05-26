@@ -56,3 +56,21 @@ func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(msg *amqp.Delivery) {
 
 	_ = msg.Ack(false)
 }
+
+type RabbitMQEventSender struct {
+	channel *amqp.Channel
+}
+
+func NewRabbitMQEventSender(channel *amqp.Channel) *RabbitMQEventSender {
+	return &RabbitMQEventSender{channel: channel}
+}
+
+func (r *RabbitMQEventSender) Broadcast(ctx context.Context, event domain.Event) error {
+	return broker.SendEvent(ctx, &broker.SendEventRequest{
+		Channel:  r.channel,
+		Routing:  broker.FanOut,
+		Exchange: event.Destination,
+		Queue:    "",
+		Body:     event.Data,
+	})
+}

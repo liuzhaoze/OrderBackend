@@ -1,6 +1,9 @@
 package main
 
 import (
+	"common/broker"
+	"common/consts"
+	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -9,13 +12,15 @@ import (
 	"github.com/stripe/stripe-go/v82/webhook"
 	"io"
 	"net/http"
+	"payment/domain"
 )
 
 type HttpHandler struct {
+	eventSender domain.EventSender
 }
 
-func NewHttpHandler() *HttpHandler {
-	return &HttpHandler{}
+func NewHttpHandler(eventSender domain.EventSender) *HttpHandler {
+	return &HttpHandler{eventSender: eventSender}
 }
 
 func (h *HttpHandler) HandleWebhook(c *gin.Context) {
@@ -52,7 +57,14 @@ func (h *HttpHandler) HandleWebhook(c *gin.Context) {
 			return
 		}
 		if session.PaymentStatus == stripe.CheckoutSessionPaymentStatusPaid {
-			logrus.Infoln("checkout session is paid")
+			_ = h.eventSender.Broadcast(context.TODO(), domain.Event{
+				Destination: broker.EventOrderPaid,
+				Data: &domain.Order{
+					OrderID:    session.Metadata["order_id"],
+					CustomerID: session.Metadata["customer_id"],
+					Status:     consts.OrderStatusPaid,
+				},
+			})
 		}
 	default:
 		logrus.Warnf("unexpected event type: %v\n", event.Type)

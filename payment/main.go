@@ -35,6 +35,6 @@ func main() {
 	go eventReceiver.Listen(rmqChan)
 
 	server.RunHttpServer(serviceName, func(router *gin.Engine) {
-		router.POST("/webhook", NewHttpHandler().HandleWebhook)
+		router.POST("/webhook", NewHttpHandler(mq.NewRabbitMQEventSender(rmqChan)).HandleWebhook)
 	})
 }
