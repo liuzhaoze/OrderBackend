@@ -1,0 +1,46 @@
+syntax = "proto3";
+package order;
+
+option go_package = "common/protobuf/orderpb";
+
+service OrderService {
+  rpc UpdateOrder(UpdateOrderRequest) returns (UpdateOrderResponse);
+}
+
+message UpdateOrderRequest {
+  UpdateOption UpdateOptions = 1;
+  Order Order = 2;
+}
+
+message UpdateOrderResponse {
+  Order Order = 1;
+}
+
+enum UpdateOption {
+  Unspecified = 0;
+  Status = 1; // 1 << 0
+  PaymentLink = 2; // 1 << 1
+}
+
+enum OrderStatus {
+  Unknown = 0;
+  Pending = 1;
+  WaitingForPayment = 2;
+  Paid = 3;
+  Finished = 4;
+}
+
+message Order {
+  string OrderID = 1;
+  string CustomerID = 2;
+  repeated Item Items = 3;
+  OrderStatus Status = 4;
+  string PaymentLink = 5;
+}
+
+message Item {
+  string ItemID = 1;
+  string Name = 2;
+  int64 Quantity = 3;
+  string PriceID = 4;
+}
