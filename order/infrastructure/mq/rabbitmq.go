@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"order/application"
+	"order/application/command"
 	"order/domain"
 )
 
@@ -28,10 +30,11 @@ func (r *RabbitMQEventSender) Direct(ctx context.Context, event domain.Event) er
 }
 
 type RabbitMQEventReceiver struct {
+	app *application.Application
 }
 
-func NewRabbitMQEventReceiver() *RabbitMQEventReceiver {
-	return &RabbitMQEventReceiver{}
+func NewRabbitMQEventReceiver(app *application.Application) *RabbitMQEventReceiver {
+	return &RabbitMQEventReceiver{app: app}
 }
 
 func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
@@ -69,7 +72,19 @@ func (r *RabbitMQEventReceiver) OrderPaidEventHandler(msg *amqp.Delivery) {
 		return
 	}
 
-	// TODO: implement real logic
+	_, err := r.app.Commands.UpdateOrder.Handle(context.TODO(), command.UpdateOrderCommand{
+		Order: order,
+		UpdateFunc: func(c context.Context, o *domain.Order) (*domain.Order, error) {
+			if err := o.UpdateStatus(order.Status); err != nil {
+				return nil, err
+			}
+			return o, nil
+		},
+	})
+	if err != nil {
+		logrus.Warnf("failed to update order %s: %s", order.OrderID, err)
+		// TODO: retry
+	}
 
 	_ = msg.Ack(false)
 }

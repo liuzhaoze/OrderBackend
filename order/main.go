@@ -42,7 +42,7 @@ func main() {
 		_ = closeRmqConn()
 	}()
 
-	eventReceiver := mq.NewRabbitMQEventReceiver()
+	eventReceiver := mq.NewRabbitMQEventReceiver(application)
 	go eventReceiver.Listen(rmqChan)
 
 	go server.RunGrpcServer(serviceName, func(s *grpc.Server) {
