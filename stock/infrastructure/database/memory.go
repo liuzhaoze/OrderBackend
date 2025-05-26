@@ -15,8 +15,8 @@ func NewMemoryDatabase() *MemoryDatabase {
 	return &MemoryDatabase{
 		lock: &sync.RWMutex{},
 		db: []*domain.Item{
-			{ItemID: "test_item_1", Name: "item1", Quantity: 100, PriceID: "price_test_item_1"},
-			{ItemID: "test_item_2", Name: "item2", Quantity: 200, PriceID: "price_test_item_2"},
+			{ItemID: "prod_SNjRcpjxpiazxk", Name: "Pencil", Quantity: 100, PriceID: "price_1RSxyuPSQHt2xYB8XhSJRSVX"},
+			{ItemID: "prod_SNjQpQjNC8QuaD", Name: "Book", Quantity: 200, PriceID: "price_1RSxy2PSQHt2xYB8uZzd0XQx"},
 		},
 	}
 }
