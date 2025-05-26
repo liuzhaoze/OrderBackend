@@ -29,7 +29,7 @@ func main() {
 	defer deregisterConsul()
 
 	go server.RunGrpcServer(serviceName, func(s *grpc.Server) {
-		orderpb.RegisterOrderServiceServer(s, NewGrpcHandler())
+		orderpb.RegisterOrderServiceServer(s, NewGrpcHandler(application))
 	})
 
 	server.RunHttpServer(serviceName, func(router *gin.Engine) {
