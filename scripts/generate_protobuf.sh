@@ -26,5 +26,6 @@ function generate() {
 
 # protoc 会在当前目录 . 按照 proto 文件中的 go_package 路径生成代码
 generate . stock
+generate . order
 
 echo "protobuf code generate success!"
