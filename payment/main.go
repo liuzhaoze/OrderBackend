@@ -3,12 +3,16 @@ package main
 import (
 	"common/broker"
 	_ "common/config"
+	"common/server"
 	"context"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"payment/infrastructure/mq"
 )
 
 func main() {
+	serviceName := viper.GetString("payment.service-name")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -30,5 +34,7 @@ func main() {
 	eventReceiver := mq.NewRabbitMQEventReceiver(application)
 	go eventReceiver.Listen(rmqChan)
 
-	select {}
+	server.RunHttpServer(serviceName, func(router *gin.Engine) {
+		router.POST("/webhook", NewHttpHandler().HandleWebhook)
+	})
 }

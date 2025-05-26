@@ -10,6 +10,11 @@ stock:
   grpc-host: 127.0.0.1
   grpc-port: 8202
 
+payment:
+  service-name: payment
+  http-host: 127.0.0.1
+  http-port: 8301
+
 consul:
   host: 127.0.0.1
   port: 8400
