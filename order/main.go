@@ -33,6 +33,7 @@ func main() {
 	})
 
 	server.RunHttpServer(serviceName, func(router *gin.Engine) {
+		router.StaticFile("/payment", "../public/payment.html")
 		ports.RegisterHandlersWithOptions(router, NewHttpHandler(application), ports.GinServerOptions{
 			BaseURL:      "/api",
 			Middlewares:  nil, // 中间件在 RunHttpServer 中统一设置

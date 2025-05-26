@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>OrderPayment</title>
+</head>
+
+<body>
+  <section>
+    <p>
+      已成功下单！
+    </p>
+    <p>
+      订单状态：<span id="orderStatus">等待中……</span>
+    </p>
+    <div class="payment-popup">
+      <a id="paymentLink" href="#">支付</a>
+    </div>
+    <div class="finish-popup">
+      <p>
+        订单号：<b><span id="orderID"></span></b>
+      </p>
+      <button class="close-button" onclick="document.querySelector('.finish-popup').style.display = 'none';">
+        关闭
+      </button>
+    </div>
+  </section>
+</body>
+
+<style>
+  /* 全局样式 */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body {
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  /* 主容器样式 */
+  section {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  p {
+    margin-bottom: 20px;
+    font-size: 16px;
+  }
+
+  /* 订单成功标题 */
+  section>p:first-child {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2ecc71;
+    margin-bottom: 20px;
+    position: relative;
+    padding-bottom: 15px;
+  }
+
+  section>p:first-child::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background-color: #2ecc71;
+    border-radius: 3px;
+  }
+
+  /* 订单状态样式 */
+  #orderStatus {
+    font-weight: 700;
+    color: #3498db;
+  }
+
+  /* 弹窗样式 */
+  .payment-popup,
+  .finish-popup {
+    display: none;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    border-left: 4px solid #3498db;
+    text-align: left;
+  }
+
+  .payment-popup {
+    border-left-color: #f39c12;
+  }
+
+  .finish-popup {
+    border-left-color: #2ecc71;
+  }
+
+  /* 支付按钮样式 */
+  #paymentLink {
+    display: inline-block;
+    background-color: #f39c12;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 15px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, background-color 0.2s;
+  }
+
+  #paymentLink:hover {
+    background-color: #e67e22;
+    transform: translateY(-2px);
+  }
+
+  #paymentLink:active {
+    transform: translateY(0);
+  }
+
+  /* 关闭按钮样式 */
+  .close-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+  }
+
+  .close-button:hover {
+    background-color: #2980b9;
+  }
+
+  /* 订单号样式 */
+  #orderID {
+    background-color: #eee;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    letter-spacing: 1px;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 600px) {
+    section {
+      padding: 20px;
+      margin: 10px;
+    }
+
+    section>p:first-child {
+      font-size: 20px;
+    }
+  }
+
+  /* 加载动画 */
+  @keyframes pulse {
+    0% {
+      opacity: 0.5;
+    }
+
+    50% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0.5;
+    }
+  }
+</style>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const customerID = urlParams.get("customer-id");
+  const orderID = urlParams.get("order-id");
+  // 在 getOrder 函数外面添加这个函数
+  function updateOrderStatus(status, isWaiting = false) {
+    const statusElement = document.getElementById("orderStatus");
+    statusElement.innerText = status;
+
+    if (isWaiting) {
+      statusElement.classList.add("waiting");
+    } else {
+      statusElement.classList.remove("waiting");
+    }
+  }
+
+  // 然后在 getOrder 函数中替换现有的状态更新代码
+  const getOrder = async () => {
+    // 将初始状态设置为等待中
+    updateOrderStatus("等待中...", true);
+
+    try {
+      const response = await fetch(`api/customer/${customerID}/orders/${orderID}`);
+      const data = await response.json();
+
+      if (data.data.status === "WAITING_FOR_PAYMENT") {
+        updateOrderStatus("等待支付...");
+        document.querySelector(".payment-popup").style.display = "block";
+        document.getElementById("paymentLink").href = data.data.payment_link;
+      }
+      if (data.data.status === "PAID") {
+        updateOrderStatus("已成功支付，正在处理订单...", true);
+        setTimeout(getOrder, 5000);
+      } else if (data.data.status === "FINISHED") {
+        updateOrderStatus("已完成");
+        document.querySelector(".payment-popup").style.display = "none";
+        document.querySelector(".finish-popup").style.display = "block";
+        document.getElementById("orderID").innerText = orderID;
+      } else {
+        setTimeout(getOrder, 5000);
+      }
+    } catch (error) {
+      console.error("获取订单数据失败:", error);
+      updateOrderStatus("获取订单信息失败");
+      setTimeout(getOrder, 10000); // 失败后延长重试时间
+    }
+  }
+  getOrder()
+</script>
+
+</html>

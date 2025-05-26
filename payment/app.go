@@ -3,6 +3,7 @@ package main
 import (
 	client "common/client/order"
 	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"payment/application"
@@ -16,7 +17,8 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 	if stripeKey == "" {
 		logger.Panicln("empty stripe key, please set STRIPE_KEY environment variable")
 	}
-	paymentCreator := stripe.NewStripe(stripeKey, "TODO:")
+	paymentBaseURL := fmt.Sprintf("http://%s:%s", viper.GetString("order.http-host"), viper.GetString("order.http-port"))
+	paymentCreator := stripe.NewStripe(stripeKey, paymentBaseURL)
 	orderGrpcClient, closeOrderGrpcClient, err := client.NewOrderGrpcClient(ctx)
 	if err != nil {
 		logger.Panicln(err)

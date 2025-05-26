@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"net/http"
 	"order/application"
 	"order/application/command"
@@ -59,6 +60,10 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 		Data: gin.H{
 			"customer_id": requestBody.CustomerID,
 			"order_id":    result.OrderID,
+			"redirect_url": fmt.Sprintf("http://%s:%s/payment?customer-id=%s&order-id=%s",
+				viper.GetString("order.http-host"), viper.GetString("order.http-port"),
+				requestBody.CustomerID, result.OrderID,
+			),
 		},
 		ErrorCode: 0,
 		Message:   "success",
