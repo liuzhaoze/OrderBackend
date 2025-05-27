@@ -1,6 +1,7 @@
 package server
 
 import (
+	"common/middleware"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -28,6 +29,6 @@ func RunHttpServer(serviceName string, register func(router *gin.Engine)) {
 }
 
 func setMiddlewares(router *gin.Engine) {
-	// TODO: add middlewares
+	router.Use(middleware.LogHttpRequest(logrus.NewEntry(logrus.StandardLogger())))
 	router.Use(gin.Recovery())
 }
