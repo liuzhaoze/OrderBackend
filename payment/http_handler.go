@@ -3,7 +3,7 @@ package main
 import (
 	"common/broker"
 	"common/consts"
-	"context"
+	"common/tracing"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -24,6 +24,9 @@ func NewHttpHandler(eventSender domain.EventSender) *HttpHandler {
 }
 
 func (h *HttpHandler) HandleWebhook(c *gin.Context) {
+	ctx, span := tracing.StartSpan(c.Request.Context(), "Payment/HTTP/Webhook: 获取订单支付状态")
+	defer span.End()
+
 	const MaxBodyBytes = int64(65536)
 
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxBodyBytes)
@@ -57,7 +60,8 @@ func (h *HttpHandler) HandleWebhook(c *gin.Context) {
 			return
 		}
 		if session.PaymentStatus == stripe.CheckoutSessionPaymentStatusPaid {
-			_ = h.eventSender.Broadcast(context.TODO(), domain.Event{
+			span.AddEvent("订单已支付")
+			_ = h.eventSender.Broadcast(ctx, domain.Event{
 				Destination: broker.EventOrderPaid,
 				Data: &domain.Order{
 					OrderID:    session.Metadata["order_id"],
@@ -65,6 +69,7 @@ func (h *HttpHandler) HandleWebhook(c *gin.Context) {
 					Status:     consts.OrderStatusPaid,
 				},
 			})
+			span.AddEvent("send to order.paid MQ (broadcast)")
 		}
 	default:
 		logrus.Warnf("unexpected event type: %v\n", event.Type)

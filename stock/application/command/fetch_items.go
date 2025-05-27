@@ -2,6 +2,7 @@ package command
 
 import (
 	"common/cqrs"
+	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
 	"stock/domain"
@@ -22,6 +23,9 @@ type fetchItems struct {
 }
 
 func (f fetchItems) Handle(ctx context.Context, command FetchItemsCommand) (FetchItemsResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Stock/Application/Command: fetch items")
+	defer span.End()
+
 	query := make([]*domain.Item, len(command.Items))
 	for i, item := range command.Items {
 		query[i] = &domain.Item{ItemID: item.ItemID} // 只需要赋值 ItemID 用于指定要更新的 item 即可

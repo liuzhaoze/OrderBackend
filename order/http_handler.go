@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common/tracing"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -22,12 +23,16 @@ func NewHttpHandler(app *application.Application) *HttpHandler {
 }
 
 func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId string) {
+	ctx, span := tracing.StartSpan(c.Request.Context(), "Order/HTTP/POST: 创建订单")
+	defer span.End()
+
 	var requestBody ports.CreateOrderRequest
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
 		resp := ports.Response{
 			Data:      nil,
 			ErrorCode: -1,
 			Message:   err.Error(),
+			TraceID:   tracing.TraceID(ctx),
 		}
 		c.JSON(http.StatusBadRequest, resp)
 		return
@@ -37,12 +42,13 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 			Data:      nil,
 			ErrorCode: -2,
 			Message:   err.Error(),
+			TraceID:   tracing.TraceID(ctx),
 		}
 		c.JSON(http.StatusBadRequest, resp)
 		return
 	}
 
-	result, err := h.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrderCommand{
+	result, err := h.app.Commands.CreateOrder.Handle(ctx, command.CreateOrderCommand{
 		CustomerID: requestBody.CustomerID,
 		Items:      dto.NewItemWithQuantityConverter().FromHttpBatch(requestBody.Items),
 	})
@@ -51,6 +57,7 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 			Data:      nil,
 			ErrorCode: -3,
 			Message:   err.Error(),
+			TraceID:   tracing.TraceID(ctx),
 		}
 		c.JSON(http.StatusBadRequest, resp)
 		return
@@ -67,12 +74,16 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 		},
 		ErrorCode: 0,
 		Message:   "success",
+		TraceID:   tracing.TraceID(ctx),
 	}
 	c.JSON(http.StatusOK, resp)
 }
 
 func (h *HttpHandler) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerId string, orderId string) {
-	result, err := h.app.Queries.GetOrder.Handle(c.Request.Context(), query.GetOrderQuery{
+	ctx, span := tracing.StartSpan(c.Request.Context(), "Order/HTTP/GET: 获取订单")
+	defer span.End()
+
+	result, err := h.app.Queries.GetOrder.Handle(ctx, query.GetOrderQuery{
 		OrderID:    orderId,
 		CustomerID: customerId,
 	})
@@ -81,6 +92,7 @@ func (h *HttpHandler) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, custome
 			Data:      nil,
 			ErrorCode: -4,
 			Message:   err.Error(),
+			TraceID:   tracing.TraceID(ctx),
 		}
 		c.JSON(http.StatusBadRequest, resp)
 		return
@@ -95,6 +107,7 @@ func (h *HttpHandler) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, custome
 		},
 		ErrorCode: 0,
 		Message:   "success",
+		TraceID:   tracing.TraceID(ctx),
 	}
 	c.JSON(http.StatusOK, resp)
 }

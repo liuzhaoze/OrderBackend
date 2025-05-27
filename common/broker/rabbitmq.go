@@ -1,9 +1,11 @@
 package broker
 
 import (
+	"context"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 type RabbitMQRoutingType string
@@ -39,4 +41,37 @@ func RabbitMQChannel(conn *amqp.Connection) *amqp.Channel {
 	}
 
 	return channel
+}
+
+type RabbitMQCarrier map[string]interface{}
+
+func (r RabbitMQCarrier) Get(key string) string {
+	if val, ok := r[key]; ok {
+		return val.(string)
+	} else {
+		return ""
+	}
+}
+
+func (r RabbitMQCarrier) Set(key string, value string) {
+	r[key] = value
+}
+
+func (r RabbitMQCarrier) Keys() []string {
+	keys := make([]string, len(r))
+	i := 0
+	for k := range r {
+		keys[i] = k
+	}
+	return keys
+}
+
+func RabbitMQInsertHeaders(ctx context.Context) map[string]interface{} {
+	headers := make(RabbitMQCarrier)
+	otel.GetTextMapPropagator().Inject(ctx, headers)
+	return headers
+}
+
+func RabbitMQExtractHeaders(ctx context.Context, headers map[string]interface{}) context.Context {
+	return otel.GetTextMapPropagator().Extract(ctx, RabbitMQCarrier(headers))
 }

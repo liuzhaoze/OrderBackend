@@ -76,6 +76,7 @@ components:
         - errorCode
         - message
         - data
+        - traceID
       properties:
         errorCode:
           type: integer
@@ -84,6 +85,8 @@ components:
           type: string
         data:
           type: object
+        traceID:
+          type: string
 
     Error:
       type: object

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func RunHttpServer(serviceName string, register func(router *gin.Engine)) {
@@ -21,14 +22,15 @@ func RunHttpServer(serviceName string, register func(router *gin.Engine)) {
 
 	router := gin.New()
 	// 设置中间件必须在注册路由之前
-	setMiddlewares(router)
+	setMiddlewares(router, serviceName)
 	register(router)
 	if err := router.Run(address); err != nil {
 		logrus.Panicln(err)
 	}
 }
 
-func setMiddlewares(router *gin.Engine) {
+func setMiddlewares(router *gin.Engine, serviceName string) {
 	router.Use(middleware.LogHttpRequest(logrus.NewEntry(logrus.StandardLogger())))
 	router.Use(gin.Recovery())
+	router.Use(otelgin.Middleware(serviceName))
 }

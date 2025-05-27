@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -19,8 +20,9 @@ func RunGrpcServer(serviceName string, register func(server *grpc.Server)) {
 	}
 	address := fmt.Sprintf("%s:%s", host, port)
 
-	// TODO: gRPC options
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	register(server)
 
 	listener, err := net.Listen("tcp", address)

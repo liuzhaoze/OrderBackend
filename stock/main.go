@@ -5,6 +5,7 @@ import (
 	"common/discovery"
 	"common/protobuf/stockpb"
 	"common/server"
+	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -25,6 +26,18 @@ func main() {
 		logrus.Fatal(err)
 	}
 	defer deregisterConsul()
+
+	shutdown, err := tracing.OTelTracer(
+		viper.GetString("zipkin.host"),
+		viper.GetString("zipkin.port"),
+		serviceName,
+	)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 
 	server.RunGrpcServer(serviceName, func(s *grpc.Server) {
 		stockpb.RegisterStockServiceServer(s, NewGrpcHandler(application))

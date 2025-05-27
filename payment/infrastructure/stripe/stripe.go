@@ -1,6 +1,7 @@
 package stripe
 
 import (
+	"common/tracing"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,9 @@ func NewStripe(apiKey, paymentBaseURL string) *Stripe {
 }
 
 func (s *Stripe) CreatePaymentLink(ctx context.Context, order *domain.Order) (string, error) {
+	ctx, span := tracing.StartSpan(ctx, "Payment/Stripe: 创建支付链接")
+	defer span.End()
+
 	items := make([]*stripe.CheckoutSessionLineItemParams, len(order.Items))
 	for i, item := range order.Items {
 		items[i] = &stripe.CheckoutSessionLineItemParams{

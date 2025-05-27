@@ -2,6 +2,7 @@ package mq
 
 import (
 	"common/broker"
+	"common/tracing"
 	"context"
 	"encoding/json"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -63,6 +64,9 @@ func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
 }
 
 func (r *RabbitMQEventReceiver) OrderPaidEventHandler(msg *amqp.Delivery) {
+	ctx, span := tracing.StartSpan(broker.RabbitMQExtractHeaders(context.Background(), msg.Headers), "Order/MQ: 处理订单支付完成事件")
+	defer span.End()
+
 	logrus.Infof("received message: %s", msg.Body)
 
 	order := &domain.Order{}
@@ -72,7 +76,7 @@ func (r *RabbitMQEventReceiver) OrderPaidEventHandler(msg *amqp.Delivery) {
 		return
 	}
 
-	_, err := r.app.Commands.UpdateOrder.Handle(context.TODO(), command.UpdateOrderCommand{
+	_, err := r.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrderCommand{
 		Order: order,
 		UpdateFunc: func(c context.Context, o *domain.Order) (*domain.Order, error) {
 			if err := o.UpdateStatus(order.Status); err != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"common/protobuf/orderpb"
+	"common/tracing"
 	"context"
 	"order/application"
 	"order/application/command"
@@ -18,6 +19,9 @@ func NewGrpcHandler(app *application.Application) *GrpcHandler {
 }
 
 func (g *GrpcHandler) UpdateOrder(ctx context.Context, request *orderpb.UpdateOrderRequest) (*orderpb.UpdateOrderResponse, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order/gRPC/update order: 更新订单")
+	defer span.End()
+
 	order := dto.NewOrderConverter().FromOrderGrpc(request.Order)
 	result, err := g.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrderCommand{
 		Order: order,

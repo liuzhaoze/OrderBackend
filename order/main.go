@@ -6,6 +6,7 @@ import (
 	"common/discovery"
 	"common/protobuf/orderpb"
 	"common/server"
+	"common/tracing"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -29,6 +30,18 @@ func main() {
 		logrus.Fatal(err)
 	}
 	defer deregisterConsul()
+
+	shutdown, err := tracing.OTelTracer(
+		viper.GetString("zipkin.host"),
+		viper.GetString("zipkin.port"),
+		serviceName,
+	)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 
 	rmqConn, closeRmqConn := broker.RabbitMQConnect(
 		viper.GetString("rabbitmq.user"),

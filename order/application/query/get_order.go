@@ -2,6 +2,7 @@ package query
 
 import (
 	"common/cqrs"
+	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
 	"order/domain"
@@ -23,6 +24,9 @@ type getOrder struct {
 }
 
 func (g getOrder) Handle(ctx context.Context, query GetOrderQuery) (GetOrderResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order/Application/Query: get order")
+	defer span.End()
+
 	order, err := g.orderRepo.Get(ctx, query.OrderID, query.CustomerID)
 	if err != nil {
 		return GetOrderResult{Order: nil}, err

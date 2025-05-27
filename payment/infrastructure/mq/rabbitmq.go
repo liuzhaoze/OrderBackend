@@ -2,6 +2,7 @@ package mq
 
 import (
 	"common/broker"
+	"common/tracing"
 	"context"
 	"encoding/json"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -40,6 +41,9 @@ func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
 }
 
 func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(msg *amqp.Delivery) {
+	ctx, span := tracing.StartSpan(broker.RabbitMQExtractHeaders(context.Background(), msg.Headers), "Payment/MQ: 处理订单创建完成事件")
+	defer span.End()
+
 	logrus.Infof("received message: %s", msg.Body)
 
 	order := &domain.Order{}
@@ -49,7 +53,7 @@ func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(msg *amqp.Delivery) {
 		return
 	}
 
-	if _, err := r.app.Commands.CreatePayment.Handle(context.TODO(), command.CreatePaymentCommand{Order: order}); err != nil {
+	if _, err := r.app.Commands.CreatePayment.Handle(ctx, command.CreatePaymentCommand{Order: order}); err != nil {
 		logrus.Warnf("failed to create payment for order %s: %s", order.OrderID, err)
 		// TODO: retry
 	}

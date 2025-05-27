@@ -1,6 +1,7 @@
 package database
 
 import (
+	"common/tracing"
 	"context"
 	"stock/domain"
 	"sync"
@@ -22,6 +23,9 @@ func NewMemoryDatabase() *MemoryDatabase {
 }
 
 func (m *MemoryDatabase) Get(ctx context.Context, itemIDs []string) ([]*domain.Item, error) {
+	ctx, span := tracing.StartSpan(ctx, "Stock Repository: get")
+	defer span.End()
+
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
@@ -51,6 +55,9 @@ func (m *MemoryDatabase) Get(ctx context.Context, itemIDs []string) ([]*domain.I
 
 // Update 首先找到 items 在数据库中对应的所有对象，然后将这些对象按照 updateFunc 的逻辑进行修改，最后返回修改后的对象们
 func (m *MemoryDatabase) Update(ctx context.Context, items []*domain.Item, updateFunc func(context.Context, []*domain.Item) ([]*domain.Item, error)) ([]*domain.Item, error) {
+	ctx, span := tracing.StartSpan(ctx, "Stock Repository: update")
+	defer span.End()
+
 	m.lock.Lock()
 	defer m.lock.Unlock()
 

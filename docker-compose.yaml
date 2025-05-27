@@ -10,3 +10,8 @@ services:
     ports:
       - "8500:5672"
       - "8501:15672"
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "8600:9411"

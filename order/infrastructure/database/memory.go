@@ -1,6 +1,7 @@
 package database
 
 import (
+	"common/tracing"
 	"context"
 	"crypto/md5"
 	"fmt"
@@ -20,6 +21,9 @@ func NewMemoryDatabase() *MemoryDatabase {
 }
 
 func (m *MemoryDatabase) Create(ctx context.Context, order *domain.Order) (*domain.Order, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order Repository: create")
+	defer span.End()
+
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
@@ -34,6 +38,9 @@ func (m *MemoryDatabase) Create(ctx context.Context, order *domain.Order) (*doma
 }
 
 func (m *MemoryDatabase) Get(ctx context.Context, orderID string, customerID string) (*domain.Order, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order Repository: get")
+	defer span.End()
+
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
@@ -51,6 +58,9 @@ func (m *MemoryDatabase) Get(ctx context.Context, orderID string, customerID str
 
 // Update 首先找到 order 在数据库中对应的对象，然后按照 updateFunc 的逻辑修改该对象，最后返回修改后的对象
 func (m *MemoryDatabase) Update(ctx context.Context, order *domain.Order, updateFunc func(context.Context, *domain.Order) (*domain.Order, error)) (*domain.Order, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order Repository: update")
+	defer span.End()
+
 	m.lock.Lock()
 	defer m.lock.Unlock()
 

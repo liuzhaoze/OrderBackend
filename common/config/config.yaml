@@ -15,6 +15,9 @@ payment:
   http-host: 127.0.0.1
   http-port: 8301
 
+process:
+  service-name: process
+
 consul:
   host: 127.0.0.1
   port: 8400
@@ -24,3 +27,7 @@ rabbitmq:
   password: guest
   host: 127.0.0.1
   port: 8500
+
+zipkin:
+  host: 127.0.0.1
+  port: 8600

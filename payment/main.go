@@ -4,8 +4,10 @@ import (
 	"common/broker"
 	_ "common/config"
 	"common/server"
+	"common/tracing"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"payment/infrastructure/mq"
 )
@@ -18,6 +20,18 @@ func main() {
 
 	application, cleanup := NewApplication(ctx)
 	defer cleanup()
+
+	shutdown, err := tracing.OTelTracer(
+		viper.GetString("zipkin.host"),
+		viper.GetString("zipkin.port"),
+		serviceName,
+	)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 
 	rmqConn, closeRmqConn := broker.RabbitMQConnect(
 		viper.GetString("rabbitmq.user"),

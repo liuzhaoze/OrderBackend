@@ -37,6 +37,7 @@ func SendEvent(ctx context.Context, request *SendEventRequest) error {
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
 			Body:         marshalled,
+			Headers:      RabbitMQInsertHeaders(ctx),
 		})
 
 	case FanOut:
@@ -49,6 +50,7 @@ func SendEvent(ctx context.Context, request *SendEventRequest) error {
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
 			Body:         marshalled,
+			Headers:      RabbitMQInsertHeaders(ctx),
 		})
 
 	default:

@@ -4,6 +4,7 @@ import (
 	"common/consts"
 	"common/cqrs"
 	"common/protobuf/orderpb"
+	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
 	"payment/domain"
@@ -26,6 +27,9 @@ type createPayment struct {
 }
 
 func (c createPayment) Handle(ctx context.Context, command CreatePaymentCommand) (CreatePaymentResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Payment/Application/Command: create payment")
+	defer span.End()
+
 	link, err := c.paymentCreator.CreatePaymentLink(ctx, command.Order)
 	if err != nil {
 		return CreatePaymentResult{PaymentLink: ""}, err

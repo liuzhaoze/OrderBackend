@@ -25,6 +25,7 @@ type Response struct {
 	Data      map[string]interface{} `json:"data"`
 	ErrorCode int64                  `json:"errorCode"`
 	Message   string                 `json:"message"`
+	TraceID   string                 `json:"traceID"`
 }
 
 // PostCustomerCustomerIdCreateJSONRequestBody defines body for PostCustomerCustomerIdCreate for application/json ContentType.

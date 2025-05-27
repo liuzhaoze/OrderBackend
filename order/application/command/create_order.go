@@ -5,6 +5,7 @@ import (
 	"common/consts"
 	"common/cqrs"
 	"common/protobuf/stockpb"
+	"common/tracing"
 	"context"
 	"errors"
 	"fmt"
@@ -32,6 +33,9 @@ type createOrder struct {
 }
 
 func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (CreateOrderResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order/Application/Command: create order")
+	defer span.End()
+
 	packedItems := packItems(command.Items)
 	grpcRequest := &stockpb.CheckAndFetchItemsRequest{Items: dto.NewItemWithQuantityConverter().ToStockGrpcBatch(packedItems)}
 	// 通过 stock gRPC 校验库存是否充足
@@ -50,6 +54,7 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 
 	switch stockStatus {
 	case consts.StockStatusInsufficient:
+		span.AddEvent("库存不足")
 		// 库存不足，将当前库存添加到错误信息中返回
 		text := "insufficient stock to create order, current stock:"
 		for _, item := range stockItems {
@@ -58,6 +63,7 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 		return CreateOrderResult{OrderID: ""}, errors.New(text)
 
 	case consts.StockStatusSufficient:
+		span.AddEvent("库存充足")
 		// 库存充足，使用请求物品数量覆盖库存物品数量，目的是保留 Name 和 PriceID
 		for _, from := range packedItems {
 			for _, to := range stockItems {
@@ -81,6 +87,7 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 		if err != nil {
 			return CreateOrderResult{OrderID: ""}, err
 		}
+		span.AddEvent("send to order.created MQ (direct)")
 
 		return CreateOrderResult{OrderID: order.OrderID}, nil
 

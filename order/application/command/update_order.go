@@ -2,6 +2,7 @@ package command
 
 import (
 	"common/cqrs"
+	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
 	"order/domain"
@@ -23,6 +24,9 @@ type updateOrder struct {
 }
 
 func (u updateOrder) Handle(ctx context.Context, command UpdateOrderCommand) (UpdateOrderResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Order/Application/Command: update order")
+	defer span.End()
+
 	if updatedOrder, err := u.orderRepo.Update(ctx, command.Order, command.UpdateFunc); err != nil {
 		return UpdateOrderResult{Order: nil}, err
 	} else {

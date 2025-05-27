@@ -3,6 +3,7 @@ package query
 import (
 	"common/consts"
 	"common/cqrs"
+	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
 	"stock/domain"
@@ -24,6 +25,9 @@ type checkItems struct {
 }
 
 func (c checkItems) Handle(ctx context.Context, query CheckItemsQuery) (CheckItemsResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Stock/Application/Query: check items")
+	defer span.End()
+
 	itemIDs := make([]string, len(query.Items))
 	for i, item := range query.Items {
 		itemIDs[i] = item.ItemID
