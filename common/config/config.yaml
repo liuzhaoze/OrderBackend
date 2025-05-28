@@ -39,3 +39,10 @@ mongo:
   port: 8700
   db-name: order
   collection-name: order
+
+mysql:
+  user: user
+  password: password
+  host: 127.0.0.1
+  port: 8800
+  db-name: stock
