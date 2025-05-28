@@ -15,3 +15,23 @@ services:
     image: openzipkin/zipkin:latest
     ports:
       - "8600:9411"
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "8700:27017"
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8701:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://root:password@mongo:27017/
+      ME_CONFIG_BASICAUTH: false

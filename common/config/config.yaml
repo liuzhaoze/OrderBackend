@@ -31,3 +31,11 @@ rabbitmq:
 zipkin:
   host: 127.0.0.1
   port: 8600
+
+mongo:
+  user: root
+  password: password
+  host: 127.0.0.1
+  port: 8700
+  db-name: order
+  collection-name: order

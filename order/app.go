@@ -15,7 +15,18 @@ import (
 
 func NewApplication(ctx context.Context) (*application.Application, func()) {
 	logger := logrus.StandardLogger()
-	orderRepo := database.NewMemoryDatabase()
+	orderRepo, closeOrderRepo, err := database.NewMongoDatabase(
+		viper.GetString("mongo.user"),
+		viper.GetString("mongo.password"),
+		viper.GetString("mongo.host"),
+		viper.GetString("mongo.port"),
+		viper.GetString("mongo.db-name"),
+		viper.GetString("mongo.collection-name"),
+	)
+	if err != nil {
+		logrus.Panicln(err)
+	}
+
 	stockGrpcClient, closeStockGrpcClient, err := client.NewStockGrpcClient(ctx)
 	if err != nil {
 		logrus.Panicln(err)
@@ -39,6 +50,7 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 				GetOrder: query.NewGetOrderHandler(orderRepo, logger),
 			},
 		}, func() {
+			_ = closeOrderRepo(ctx)
 			_ = closeStockGrpcClient()
 			_ = rmqChan.Close()
 			_ = closeRmqConn()
