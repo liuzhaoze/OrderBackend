@@ -8,6 +8,7 @@ import (
 	"stock/application/command"
 	"stock/application/query"
 	"stock/infrastructure/database"
+	"stock/infrastructure/lock"
 )
 
 func NewApplication(ctx context.Context) (*application.Application, func()) {
@@ -23,9 +24,17 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 		logrus.Panicln(err)
 	}
 
+	locker := lock.NewRedisLocker(
+		viper.GetString("redis.host"),
+		viper.GetString("redis.port"),
+		viper.GetDuration("redis.lock.expiration"),
+		viper.GetInt("redis.lock.retry-number"),
+		viper.GetDuration("redis.lock.retry-delay"),
+	)
+
 	return &application.Application{
 			Commands: application.Commands{
-				FetchItems: command.NewFetchItemsHandler(stockRepo, logger),
+				FetchItems: command.NewFetchItemsHandler(stockRepo, locker, logger),
 			},
 			Queries: application.Queries{
 				CheckItems: query.NewCheckItemsHandler(stockRepo, logger),

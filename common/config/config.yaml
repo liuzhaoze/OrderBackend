@@ -46,3 +46,11 @@ mysql:
   host: 127.0.0.1
   port: 8800
   db-name: stock
+
+redis:
+  host: 127.0.0.1
+  port: 8900
+  lock:
+    expiration: 5s
+    retry-number: 3
+    retry-delay: 100ms
