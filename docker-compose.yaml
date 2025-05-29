@@ -47,3 +47,8 @@ services:
       - MYSQL_PASSWORD=password
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:latest
+    ports:
+      - "8900:6379"
