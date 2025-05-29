@@ -30,7 +30,7 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
 		resp := ports.Response{
 			Data:      nil,
-			ErrorCode: -1,
+			ErrorCode: ports.HttpBindRequestBodyError,
 			Message:   err.Error(),
 			TraceID:   tracing.TraceID(ctx),
 		}
@@ -40,7 +40,7 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 	if err := h.validateRequestBody(requestBody); err != nil {
 		resp := ports.Response{
 			Data:      nil,
-			ErrorCode: -2,
+			ErrorCode: ports.HttpValidateRequestError,
 			Message:   err.Error(),
 			TraceID:   tracing.TraceID(ctx),
 		}
@@ -55,7 +55,7 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 	if err != nil {
 		resp := ports.Response{
 			Data:      nil,
-			ErrorCode: -3,
+			ErrorCode: ports.HttpCreateOrderError,
 			Message:   err.Error(),
 			TraceID:   tracing.TraceID(ctx),
 		}
@@ -72,7 +72,7 @@ func (h *HttpHandler) PostCustomerCustomerIdCreate(c *gin.Context, customerId st
 				requestBody.CustomerID, result.OrderID,
 			),
 		},
-		ErrorCode: 0,
+		ErrorCode: ports.HttpSuccess,
 		Message:   "success",
 		TraceID:   tracing.TraceID(ctx),
 	}
@@ -90,7 +90,7 @@ func (h *HttpHandler) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, custome
 	if err != nil {
 		resp := ports.Response{
 			Data:      nil,
-			ErrorCode: -4,
+			ErrorCode: ports.HttpGetOrderError,
 			Message:   err.Error(),
 			TraceID:   tracing.TraceID(ctx),
 		}
@@ -105,7 +105,7 @@ func (h *HttpHandler) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, custome
 			"status":       result.Order.Status,
 			"payment_link": result.Order.PaymentLink,
 		},
-		ErrorCode: 0,
+		ErrorCode: ports.HttpSuccess,
 		Message:   "success",
 		TraceID:   tracing.TraceID(ctx),
 	}
