@@ -34,13 +34,13 @@ func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
 	forever := make(chan struct{})
 	go func() {
 		for msg := range messages {
-			r.OrderCreatedEventHandler(&msg)
+			r.OrderCreatedEventHandler(channel, &msg)
 		}
 	}()
 	<-forever
 }
 
-func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(msg *amqp.Delivery) {
+func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(channel *amqp.Channel, msg *amqp.Delivery) {
 	ctx, span := tracing.StartSpan(broker.RabbitMQExtractHeaders(context.Background(), msg.Headers), "Payment/MQ: 处理订单创建完成事件")
 	defer span.End()
 
@@ -55,9 +55,14 @@ func (r *RabbitMQEventReceiver) OrderCreatedEventHandler(msg *amqp.Delivery) {
 
 	if _, err := r.app.Commands.CreatePayment.Handle(ctx, command.CreatePaymentCommand{Order: order}); err != nil {
 		logrus.Warnf("failed to create payment for order %s: %s", order.OrderID, err)
-		// TODO: retry
+		if err = broker.RabbitMQRetry(ctx, channel, msg); err != nil {
+			logrus.Errorf("failed to retry message: %v", err)
+			_ = msg.Nack(false, false)
+		}
+		return
 	}
 
+	logrus.Info("message processed successfully")
 	_ = msg.Ack(false)
 }
 

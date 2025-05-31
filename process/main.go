@@ -44,6 +44,7 @@ func main() {
 		viper.GetString("rabbitmq.password"),
 		viper.GetString("rabbitmq.host"),
 		viper.GetString("rabbitmq.port"),
+		viper.GetInt("rabbitmq.max-retry"),
 	)
 	rmqChan := broker.RabbitMQChannel(rmqConn)
 	defer func() {

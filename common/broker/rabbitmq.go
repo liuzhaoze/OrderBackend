@@ -6,6 +6,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
+	"time"
 )
 
 type RabbitMQRoutingType string
@@ -15,7 +16,16 @@ const (
 	FanOut RabbitMQRoutingType = "fanout"
 )
 
-func RabbitMQConnect(user, password, host, port string) (*amqp.Connection, func() error) {
+const (
+	DLX            = "dlx" // Dead Letter Exchange
+	DLQ            = "dlq" // Dead Letter Queue
+	retryHeaderKey = "x-retry-count"
+)
+
+var maxRetryCount int
+
+func RabbitMQConnect(user, password, host, port string, maxRetryNumber int) (*amqp.Connection, func() error) {
+	maxRetryCount = maxRetryNumber
 	address := fmt.Sprintf("amqp://%s:%s@%s:%s/", user, password, host, port)
 	conn, err := amqp.Dial(address)
 	if err != nil {
@@ -36,6 +46,23 @@ func RabbitMQChannel(conn *amqp.Connection) *amqp.Channel {
 	}
 
 	err = channel.ExchangeDeclare(EventOrderPaid, string(FanOut), true, false, false, false, nil)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	// Dead Letter Exchange
+	err = channel.ExchangeDeclare(DLX, string(FanOut), true, false, false, false, nil)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	// Dead Letter Queue
+	dlq, err := channel.QueueDeclare(DLQ, true, false, false, false, nil)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	err = channel.QueueBind(dlq.Name, "", DLX, false, nil)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -74,4 +101,32 @@ func RabbitMQInsertHeaders(ctx context.Context) map[string]interface{} {
 
 func RabbitMQExtractHeaders(ctx context.Context, headers map[string]interface{}) context.Context {
 	return otel.GetTextMapPropagator().Extract(ctx, RabbitMQCarrier(headers))
+}
+
+func RabbitMQRetry(ctx context.Context, channel *amqp.Channel, delivery *amqp.Delivery) error {
+	if delivery.Headers == nil {
+		delivery.Headers = amqp.Table{}
+	}
+
+	retryCount, exists := delivery.Headers[retryHeaderKey].(int)
+	if !exists {
+		retryCount = 0
+	}
+	retryCount++
+	delivery.Headers[retryHeaderKey] = retryCount
+
+	if retryCount > maxRetryCount {
+		logrus.Warnf("max retry count reached, sending to DLQ")
+		_ = delivery.Nack(false, false)
+		return channel.PublishWithContext(ctx, DLX, "", false, false, amqp.Publishing{
+			Headers:      delivery.Headers,
+			ContentType:  "application/json",
+			DeliveryMode: amqp.Persistent,
+			Body:         delivery.Body,
+		})
+	}
+
+	logrus.Warnf("retrying message, attempt %d/%d", retryCount, maxRetryCount)
+	time.Sleep(time.Second * time.Duration(retryCount))
+	return delivery.Nack(false, true)
 }

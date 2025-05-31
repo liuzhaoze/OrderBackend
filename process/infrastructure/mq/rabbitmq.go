@@ -39,13 +39,13 @@ func (r *RabbitMQEventReceiver) Listen(channel *amqp.Channel) {
 	forever := make(chan struct{})
 	go func() {
 		for msg := range messages {
-			r.OrderPaidEventHandler(&msg)
+			r.OrderPaidEventHandler(channel, &msg)
 		}
 	}()
 	<-forever
 }
 
-func (r *RabbitMQEventReceiver) OrderPaidEventHandler(msg *amqp.Delivery) {
+func (r *RabbitMQEventReceiver) OrderPaidEventHandler(channel *amqp.Channel, msg *amqp.Delivery) {
 	ctx, span := tracing.StartSpan(broker.RabbitMQExtractHeaders(context.Background(), msg.Headers), "Process/MQ: 处理订单支付完成事件")
 	defer span.End()
 
@@ -60,8 +60,13 @@ func (r *RabbitMQEventReceiver) OrderPaidEventHandler(msg *amqp.Delivery) {
 
 	if _, err := r.app.Commands.ProcessOrder.Handle(ctx, command.ProcessOrderCommand{Order: order}); err != nil {
 		logrus.Warnf("failed to process order %s: %s", order.OrderID, err)
-		// TODO: retry
+		if err = broker.RabbitMQRetry(ctx, channel, msg); err != nil {
+			logrus.Errorf("failed to retry message: %v", err)
+			_ = msg.Nack(false, false)
+		}
+		return
 	}
 
+	logrus.Info("message processed successfully")
 	_ = msg.Ack(false)
 }
