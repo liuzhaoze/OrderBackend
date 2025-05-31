@@ -38,6 +38,7 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 		viper.GetString("rabbitmq.password"),
 		viper.GetString("rabbitmq.host"),
 		viper.GetString("rabbitmq.port"),
+		viper.GetInt("rabbitmq.max-retry"),
 	)
 	rmqChan := broker.RabbitMQChannel(rmqConn)
 	eventSender := mq.NewRabbitMQEventSender(rmqChan)
