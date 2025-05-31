@@ -3,6 +3,7 @@ package query
 import (
 	"common/consts"
 	"common/cqrs"
+	"common/metrics"
 	"common/tracing"
 	"context"
 	"github.com/sirupsen/logrus"
@@ -51,9 +52,11 @@ func (c checkItems) Handle(ctx context.Context, query CheckItemsQuery) (CheckIte
 
 func NewCheckItemsHandler(stockRepo domain.StockRepository,
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) CheckItemsHandler {
 	return cqrs.ApplyQueryDecorator[CheckItemsQuery, CheckItemsResult](
 		checkItems{stockRepo: stockRepo},
 		logger,
+		metricsClient,
 	)
 }

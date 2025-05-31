@@ -4,19 +4,27 @@ order:
   http-port: 8101
   grpc-host: 127.0.0.1
   grpc-port: 8102
+  metrics-export-host: 127.0.0.1
+  metrics-export-port: 8103
 
 stock:
   service-name: stock
   grpc-host: 127.0.0.1
   grpc-port: 8202
+  metrics-export-host: 127.0.0.1
+  metrics-export-port: 8203
 
 payment:
   service-name: payment
   http-host: 127.0.0.1
   http-port: 8301
+  metrics-export-host: 127.0.0.1
+  metrics-export-port: 8303
 
 process:
   service-name: process
+  metrics-export-host: 127.0.0.1
+  metrics-export-port: 8403
 
 consul:
   host: 127.0.0.1

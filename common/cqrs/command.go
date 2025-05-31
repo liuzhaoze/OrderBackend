@@ -1,6 +1,7 @@
 package cqrs
 
 import (
+	"common/metrics"
 	"context"
 	"github.com/sirupsen/logrus"
 )
@@ -12,10 +13,13 @@ type CommandHandler[TCommand any, TResult any] interface {
 func ApplyCommandDecorator[TCommand any, TResult any](
 	handler CommandHandler[TCommand, TResult],
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) CommandHandler[TCommand, TResult] {
-	// TODO: metrics
 	return commandDecoratorLogging[TCommand, TResult]{
 		logger: logger,
-		base:   handler,
+		base: commandDecoratorMetrics[TCommand, TResult]{
+			client: metricsClient,
+			base:   handler,
+		},
 	}
 }

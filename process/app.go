@@ -2,6 +2,7 @@ package main
 
 import (
 	client "common/client/order"
+	"common/metrics"
 	"context"
 	"github.com/sirupsen/logrus"
 	"process/application"
@@ -15,9 +16,11 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 		logger.Panicln(err)
 	}
 
+	metricsClient := metrics.GetPrometheusClient()
+
 	return &application.Application{
 			Commands: application.Commands{
-				ProcessOrder: command.NewProcessOrderHandler(orderGrpcClient, logger),
+				ProcessOrder: command.NewProcessOrderHandler(orderGrpcClient, logger, metricsClient),
 			},
 			Queries: application.Queries{},
 		}, func() {

@@ -52,3 +52,17 @@ services:
     image: redis:latest
     ports:
       - "8900:6379"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9000:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    ports:
+      - "9100:3000"

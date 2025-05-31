@@ -4,6 +4,7 @@ import (
 	"common/broker"
 	"common/consts"
 	"common/cqrs"
+	"common/metrics"
 	"common/protobuf/stockpb"
 	"common/tracing"
 	"context"
@@ -98,10 +99,12 @@ func (c createOrder) Handle(ctx context.Context, command CreateOrderCommand) (Cr
 
 func NewCreateOrderHandler(orderRepo domain.OrderRepository, stockGrpc stockpb.StockServiceClient, eventSender domain.EventSender,
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) CreateOrderHandler {
 	return cqrs.ApplyCommandDecorator[CreateOrderCommand, CreateOrderResult](
 		createOrder{orderRepo: orderRepo, stockGrpc: stockGrpc, eventSender: eventSender},
 		logger,
+		metricsClient,
 	)
 }
 

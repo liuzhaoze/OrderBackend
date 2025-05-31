@@ -2,6 +2,7 @@ package command
 
 import (
 	"common/cqrs"
+	"common/metrics"
 	"common/tracing"
 	"context"
 	"fmt"
@@ -67,10 +68,12 @@ func (f fetchItems) Handle(ctx context.Context, command FetchItemsCommand) (Fetc
 
 func NewFetchItemsHandler(stockRepo domain.StockRepository, locker domain.Locker,
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) FetchItemsHandler {
 	return cqrs.ApplyCommandDecorator[FetchItemsCommand, FetchItemsResult](
 		fetchItems{stockRepo: stockRepo, locker: locker},
 		logger,
+		metricsClient,
 	)
 }
 
