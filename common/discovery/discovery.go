@@ -53,7 +53,10 @@ func GetServiceAddress(ctx context.Context, serviceName string) (string, error) 
 		return "", err
 	}
 
-	addresses, err := client.Discover(ctx, serviceName)
+	discoveryTimeout := viper.GetDuration("consul.discovery-timeout")
+	logrus.Infof("discover %s service with timeout %s", serviceName, discoveryTimeout)
+
+	addresses, err := discoverService(ctx, client, serviceName, discoveryTimeout)
 	if err != nil {
 		return "", err
 	}
@@ -64,4 +67,42 @@ func GetServiceAddress(ctx context.Context, serviceName string) (string, error) 
 	logrus.Infof("%d instances of %s service found: %v", len(addresses), serviceName, addresses)
 
 	return addresses[rand.Intn(len(addresses))], nil
+}
+
+func discoverService(ctx context.Context, client *ConsulClient, serviceName string, discoveryTimeout time.Duration) ([]string, error) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, discoveryTimeout)
+	defer cancel()
+
+	availableAddressesCh := make(chan []string, 1)
+	errorCh := make(chan error, 1)
+
+	go func() {
+		for {
+			select {
+			case <-timeoutCtx.Done():
+				availableAddressesCh <- []string{}
+				return
+			default:
+				addresses, err := client.Discover(ctx, serviceName)
+				if err != nil {
+					errorCh <- err
+					return
+				}
+				if len(addresses) > 0 {
+					availableAddressesCh <- addresses
+					return
+				}
+				time.Sleep(200 * time.Millisecond)
+			}
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case err := <-errorCh:
+		return nil, err
+	case addresses := <-availableAddressesCh:
+		return addresses, nil
+	}
 }
