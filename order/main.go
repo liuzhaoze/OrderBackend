@@ -4,6 +4,7 @@ import (
 	"common/broker"
 	_ "common/config" // import for side effect to load configuration
 	"common/discovery"
+	"common/metrics"
 	"common/protobuf/orderpb"
 	"common/server"
 	"common/tracing"
@@ -21,6 +22,13 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	metrics.NewPrometheusClient(
+		viper.GetString("order.metrics-export-host"),
+		viper.GetString("order.metrics-export-port"),
+		serviceName+"Counter",
+		serviceName+"Histogram",
+	)
 
 	application, cleanup := NewApplication(ctx)
 	defer cleanup()

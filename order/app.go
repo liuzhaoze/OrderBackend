@@ -3,6 +3,7 @@ package main
 import (
 	"common/broker"
 	client "common/client/stock"
+	"common/metrics"
 	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -41,13 +42,15 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 	rmqChan := broker.RabbitMQChannel(rmqConn)
 	eventSender := mq.NewRabbitMQEventSender(rmqChan)
 
+	metricsClient := metrics.GetPrometheusClient()
+
 	return &application.Application{
 			Commands: application.Commands{
-				CreateOrder: command.NewCreateOrderHandler(orderRepo, stockGrpcClient, eventSender, logger),
-				UpdateOrder: command.NewUpdateOrderHandler(orderRepo, logger),
+				CreateOrder: command.NewCreateOrderHandler(orderRepo, stockGrpcClient, eventSender, logger, metricsClient),
+				UpdateOrder: command.NewUpdateOrderHandler(orderRepo, logger, metricsClient),
 			},
 			Queries: application.Queries{
-				GetOrder: query.NewGetOrderHandler(orderRepo, logger),
+				GetOrder: query.NewGetOrderHandler(orderRepo, logger, metricsClient),
 			},
 		}, func() {
 			_ = closeOrderRepo(ctx)

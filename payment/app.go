@@ -2,6 +2,7 @@ package main
 
 import (
 	client "common/client/order"
+	"common/metrics"
 	"context"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -24,9 +25,11 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 		logger.Panicln(err)
 	}
 
+	metricsClient := metrics.GetPrometheusClient()
+
 	return &application.Application{
 			Commands: application.Commands{
-				CreatePayment: command.NewCreatePaymentHandler(paymentCreator, orderGrpcClient, logger),
+				CreatePayment: command.NewCreatePaymentHandler(paymentCreator, orderGrpcClient, logger, metricsClient),
 			},
 			Queries: application.Queries{},
 		}, func() {

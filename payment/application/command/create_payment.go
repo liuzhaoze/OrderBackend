@@ -3,6 +3,7 @@ package command
 import (
 	"common/consts"
 	"common/cqrs"
+	"common/metrics"
 	"common/protobuf/orderpb"
 	"common/tracing"
 	"context"
@@ -52,9 +53,11 @@ func (c createPayment) Handle(ctx context.Context, command CreatePaymentCommand)
 
 func NewCreatePaymentHandler(paymentCreator domain.PaymentCreator, orderGrpc orderpb.OrderServiceClient,
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) CreatePaymentHandler {
 	return cqrs.ApplyCommandDecorator[CreatePaymentCommand, CreatePaymentResult](
 		createPayment{paymentCreator: paymentCreator, orderGrpc: orderGrpc},
 		logger,
+		metricsClient,
 	)
 }

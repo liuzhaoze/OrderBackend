@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: order-backend
+    static_configs:
+      - targets: ["host.docker.internal:8103"]
+        labels:
+          service: order
+      - targets: ["host.docker.internal:8203"]
+        labels:
+          service: stock
+      - targets: ["host.docker.internal:8303"]
+        labels:
+          service: payment
+      - targets: ["host.docker.internal:8403"]
+        labels:
+          service: process

@@ -1,6 +1,7 @@
 package cqrs
 
 import (
+	"common/metrics"
 	"context"
 	"github.com/sirupsen/logrus"
 )
@@ -12,10 +13,13 @@ type QueryHandler[TQuery any, TResult any] interface {
 func ApplyQueryDecorator[TQuery any, TResult any](
 	handler QueryHandler[TQuery, TResult],
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) QueryHandler[TQuery, TResult] {
-	// TODO: metrics
 	return queryDecoratorLogging[TQuery, TResult]{
 		logger: logger,
-		base:   handler,
+		base: queryDecoratorMetrics[TQuery, TResult]{
+			client: metricsClient,
+			base:   handler,
+		},
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common/metrics"
 	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -32,12 +33,14 @@ func NewApplication(ctx context.Context) (*application.Application, func()) {
 		viper.GetDuration("redis.lock.retry-delay"),
 	)
 
+	metricsClient := metrics.GetPrometheusClient()
+
 	return &application.Application{
 			Commands: application.Commands{
-				FetchItems: command.NewFetchItemsHandler(stockRepo, locker, logger),
+				FetchItems: command.NewFetchItemsHandler(stockRepo, locker, logger, metricsClient),
 			},
 			Queries: application.Queries{
-				CheckItems: query.NewCheckItemsHandler(stockRepo, logger),
+				CheckItems: query.NewCheckItemsHandler(stockRepo, logger, metricsClient),
 			},
 		}, func() {
 		}

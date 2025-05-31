@@ -3,6 +3,7 @@ package main
 import (
 	_ "common/config"
 	"common/discovery"
+	"common/metrics"
 	"common/protobuf/stockpb"
 	"common/server"
 	"common/tracing"
@@ -17,6 +18,13 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	metrics.NewPrometheusClient(
+		viper.GetString("stock.metrics-export-host"),
+		viper.GetString("stock.metrics-export-port"),
+		serviceName+"Counter",
+		serviceName+"Histogram",
+	)
 
 	application, cleanup := NewApplication(ctx)
 	defer cleanup()

@@ -3,6 +3,7 @@ package command
 import (
 	"common/consts"
 	"common/cqrs"
+	"common/metrics"
 	"common/protobuf/orderpb"
 	"common/tracing"
 	"context"
@@ -53,9 +54,11 @@ func (p processOrder) Handle(ctx context.Context, command ProcessOrderCommand) (
 
 func NewProcessOrderHandler(orderGrpc orderpb.OrderServiceClient,
 	logger *logrus.Logger,
+	metricsClient metrics.Client,
 ) ProcessOrderHandler {
 	return cqrs.ApplyCommandDecorator[ProcessOrderCommand, ProcessOrderResult](
 		processOrder{orderGrpc: orderGrpc},
 		logger,
+		metricsClient,
 	)
 }
