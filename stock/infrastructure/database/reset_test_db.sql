@@ -1,11 +1,4 @@
-CREATE DATABASE IF NOT EXISTS stock;
-CREATE DATABASE IF NOT EXISTS stock_test;
-
-GRANT ALL PRIVILEGES ON stock.* TO 'user'@'%';
-GRANT ALL PRIVILEGES ON stock_test.* TO 'user'@'%';
-FLUSH PRIVILEGES;
-
-USE stock;
+USE stock_test;
 
 DROP TABLE IF EXISTS items;
 
