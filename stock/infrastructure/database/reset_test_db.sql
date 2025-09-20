@@ -7,10 +7,11 @@ CREATE TABLE items (
     name VARCHAR(255) NOT NULL,
     quantity INT NOT NULL DEFAULT 0,
     price_id VARCHAR(255) NOT NULL,
+    version INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO items (item_id, name, quantity, price_id) VALUES
-    ('prod_SNjRcpjxpiazxk', 'Pencil', 100, 'price_1RSxyuPSQHt2xYB8XhSJRSVX'),
-    ('prod_SNjQpQjNC8QuaD', 'Book', 200, 'price_1RSxy2PSQHt2xYB8uZzd0XQx');
+INSERT INTO items (item_id, name, quantity, price_id, version) VALUES
+    ('prod_SNjRcpjxpiazxk', 'Pencil', 100, 'price_1RSxyuPSQHt2xYB8XhSJRSVX', 0),
+    ('prod_SNjQpQjNC8QuaD', 'Book', 200, 'price_1RSxy2PSQHt2xYB8uZzd0XQx', 0);
